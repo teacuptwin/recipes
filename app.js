@@ -26,7 +26,7 @@ loadRecipes();
 function getCsvUrl() {
   const id  = CONFIG.SHEET_ID;
   const tab = encodeURIComponent(CONFIG.SHEET_TAB);
-  return `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:tsv&sheet=${tab}`;
+  return `https://docs.google.com/spreadsheets/d/${id}/export?format=csv&sheet=${tab}`;
 }
 
 async function loadRecipes() {
@@ -64,12 +64,12 @@ function showState(state) {
 // ── Parser (PapaParse) ────────────────────────────
 function parseCsv(text) {
   const result = Papa.parse(text, {
-    header: true,
-    delimiter: '\t',
-    skipEmptyLines: true,
-    transformHeader: h => h.trim().toLowerCase(),
-    // No transform — it would collapse multiline cell values
-  });
+  header: true,
+  delimiter: ',',
+  newline: '\n',
+  skipEmptyLines: true,
+  transformHeader: h => h.trim().toLowerCase(),
+});
 
   if (result.errors.length) {
     console.warn('PapaParse warnings:', result.errors);
