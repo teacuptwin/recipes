@@ -1,6 +1,6 @@
 # 🍴 Recipe Book
 
-A beautiful, password-protected recipe app hosted on GitHub Pages — powered by a Google Sheet you can edit any time.
+A beautiful, recipe app hosted on GitHub Pages — powered by a Google Sheet you can edit any time.
 
 ---
 
