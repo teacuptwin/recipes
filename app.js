@@ -2,6 +2,10 @@
    Recipe Book — app.js
    Requires PapaParse — add to your HTML before this script:
    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+   Ingredients and Steps in your Google Sheet should be
+   separated by a pipe character: |
+   e.g. "Paella rice | 450g Chicken thighs | 6–8 Langoustines"
    ══════════════════════════════════════════════════ */
 
 // ── Elements ──────────────────────────────────────
@@ -22,7 +26,7 @@ let activeCategory = 'all';
 // ── Init ──────────────────────────────────────────
 loadRecipes();
 
-// ── TSV Fetch ─────────────────────────────────────
+// ── CSV Fetch ─────────────────────────────────────
 function getCsvUrl() {
   const id  = CONFIG.SHEET_ID;
   const tab = encodeURIComponent(CONFIG.SHEET_TAB);
@@ -34,8 +38,8 @@ async function loadRecipes() {
   try {
     const res = await fetch(getCsvUrl());
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const tsv = await res.text();
-    allRecipes = parseCsv(tsv);
+    const csv = await res.text();
+    allRecipes = parseCsv(csv);
     buildFilters();
     renderGrid(allRecipes);
     showState('grid');
@@ -64,12 +68,12 @@ function showState(state) {
 // ── Parser (PapaParse) ────────────────────────────
 function parseCsv(text) {
   const result = Papa.parse(text, {
-  header: true,
-  delimiter: ',',
-  newline: '\n',
-  skipEmptyLines: true,
-  transformHeader: h => h.trim().toLowerCase(),
-});
+    header: true,
+    delimiter: ',',
+    skipEmptyLines: true,
+    transformHeader: h => h.trim().toLowerCase(),
+    // No transform — trimming is done per field below
+  });
 
   if (result.errors.length) {
     console.warn('PapaParse warnings:', result.errors);
@@ -82,27 +86,28 @@ function parseCsv(text) {
     prepTime:    (row['prep time']   || row['prep_time']   || '').trim(),
     cookTime:    (row['cook time']   || row['cook_time']   || '').trim(),
     servings:    (row['servings']    || '').trim(),
-    ingredients: splitLines(row['ingredients'] || ''),
-    steps:       parseSteps(row['steps']       || ''),
+    ingredients: splitPipes(row['ingredients'] || ''),
+    steps:       parsePipeSteps(row['steps']   || ''),
     notes:       (row['notes']       || '').trim(),
     imageUrl:    (row['image url']   || row['image_url']   || '').trim(),
     emoji:       (row['emoji']       || '').trim() || '🍽️',
   }));
 }
 
-function splitLines(str) {
+// Split on pipe | character — use this as separator in your sheet
+function splitPipes(str) {
   return str
-    .split(/\n/)
-    .map(s => s.replace(/\s{2,}/g, ' ').trim()) // collapse multiple spaces
+    .split('|')
+    .map(s => s.replace(/\s{2,}/g, ' ').trim())
     .filter(Boolean);
 }
 
-function parseSteps(str) {
+function parsePipeSteps(str) {
   return str
-    .split(/\n/)
+    .split('|')
     .map(s => s.replace(/\s{2,}/g, ' ').trim())
     .filter(Boolean)
-    .map(l => l.replace(/^\d+[\.\)]\s*/, '')); // strip leading numbers
+    .map(l => l.replace(/^\d+[\.\)]\s*/, '')); // strip leading numbers if present
 }
 
 // ── Filters ───────────────────────────────────────
