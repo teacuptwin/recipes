@@ -65,11 +65,11 @@ function showState(state) {
 // automatically, which fixes ingredients/steps that span multiple lines.
 function parseCsv(text) {
   const result = Papa.parse(text, {
-    header: true,          // use first row as field names
-    delimiter: "\t",          // ← add this
-     skipEmptyLines: true,  // drop fully blank rows
+    header: true,
+    delimiter: "\t",
+    skipEmptyLines: true,
     transformHeader: h => h.trim().toLowerCase(),
-    transform: val => val.trim(),
+    // ← no transform here — it collapses multiline values
   });
 
   if (result.errors.length) {
@@ -77,17 +77,17 @@ function parseCsv(text) {
   }
 
   return result.data.map(row => ({
-    title:       row['title']       || 'Untitled',
-    category:    row['category']    || '',
-    description: row['description'] || '',
-    prepTime:    row['prep time']   || row['prep_time']   || '',
-    cookTime:    row['cook time']   || row['cook_time']   || '',
-    servings:    row['servings']    || '',
+    title:       (row['title']       || '').trim() || 'Untitled',
+    category:    (row['category']    || '').trim(),
+    description: (row['description'] || '').trim(),
+    prepTime:    (row['prep time']   || row['prep_time']   || '').trim(),
+    cookTime:    (row['cook time']   || row['cook_time']   || '').trim(),
+    servings:    (row['servings']    || '').trim(),
     ingredients: splitLines(row['ingredients'] || ''),
     steps:       parseSteps(row['steps']       || ''),
-    notes:       row['notes']       || '',
-    imageUrl:    row['image url']   || row['image_url']   || '',
-    emoji:       row['emoji']       || '🍽️',
+    notes:       (row['notes']       || '').trim(),
+    imageUrl:    (row['image url']   || row['image_url']   || '').trim(),
+    emoji:       (row['emoji']       || '').trim() || '🍽️',
   }));
 }
 
