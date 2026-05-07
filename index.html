@@ -4,51 +4,96 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Recipe Book</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
 </head>
 <body>
 
-  <!-- MAIN APP -->
-  <div id="app">
+  <!-- APP -->
+  <div id="app-screen" class="screen active">
 
-    <header>
+    <header class="site-header">
       <div class="header-inner">
-        <div class="logo">
-          <span class="logo-icon">🍴</span>
-          <span class="logo-text">Recipe Book</span>
+        <div class="header-brand">
+          <span class="brand-crest">✦</span>
+          <span class="brand-name">Recipe Book</span>
         </div>
         <div class="header-controls">
           <div class="search-wrap">
-            <input type="text" id="search" placeholder="Search recipes…" />
-            <span class="search-icon">⌕</span>
+            <svg class="search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M13 13l3.5 3.5" stroke-linecap="round"/></svg>
+            <input type="search" id="search-input" class="search-input" placeholder="Search recipes…" />
           </div>
-          <select id="filter-category">
-            <option value="">All categories</option>
-          </select>
+
         </div>
       </div>
     </header>
 
-    <main>
-      <div id="loading" class="state-msg">Loading recipes…</div>
-      <div id="error-msg" class="state-msg hidden">
-        Couldn't load recipes. Check your Sheet ID in <code>js/config.js</code>.
+    <main class="main-content">
+      <div id="filter-bar" class="filter-bar hidden">
+        <button class="filter-pill active" data-category="all">All</button>
       </div>
-      <div id="empty-msg" class="state-msg hidden">No recipes found.</div>
-
+      <div id="loading-state" class="loading-state">
+        <div class="spinner"></div>
+        <p>Fetching recipes…</p>
+      </div>
+      <div id="error-state" class="empty-state hidden">
+        <span class="empty-icon">⚠</span>
+        <p id="error-message">Something went wrong.</p>
+      </div>
+      <div id="empty-state" class="empty-state hidden">
+        <span class="empty-icon">✦</span>
+        <p>No recipes found.</p>
+      </div>
       <div id="recipe-grid" class="recipe-grid hidden"></div>
     </main>
 
-    <!-- RECIPE MODAL -->
-    <div id="modal-overlay" class="modal-overlay hidden">
-      <div id="modal" class="modal">
-        <button class="modal-close" id="modal-close">✕</button>
-        <div id="modal-content"></div>
+  </div>
+
+  <!-- MODAL -->
+  <div id="modal-overlay" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-card">
+      <button id="modal-close" class="modal-close" aria-label="Close">✕</button>
+      <div id="modal-hero" class="modal-hero">
+        <div id="modal-emoji" class="modal-emoji"></div>
+      </div>
+      <div class="modal-body">
+        <div class="modal-meta-top">
+          <span id="modal-category" class="modal-category-tag"></span>
+        </div>
+        <h2 id="modal-title" class="modal-title"></h2>
+        <p id="modal-description" class="modal-description"></p>
+        <div class="modal-stats">
+          <div class="stat-item">
+            <span class="stat-label">Prep</span>
+            <span class="stat-value" id="modal-prep"></span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <span class="stat-label">Cook</span>
+            <span class="stat-value" id="modal-cook"></span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <span class="stat-label">Serves</span>
+            <span class="stat-value" id="modal-servings"></span>
+          </div>
+        </div>
+        <div class="modal-section">
+          <h3 class="section-heading">Ingredients</h3>
+          <ul id="modal-ingredients" class="ingredients-list"></ul>
+        </div>
+        <div class="modal-section">
+          <h3 class="section-heading">Method</h3>
+          <ol id="modal-steps" class="steps-list"></ol>
+        </div>
+        <div id="modal-notes-wrap" class="modal-section hidden">
+          <h3 class="section-heading">Notes</h3>
+          <p id="modal-notes" class="modal-notes-text"></p>
+        </div>
       </div>
     </div>
-
   </div>
 
   <script src="js/config.js"></script>
