@@ -1,4 +1,4 @@
-const SHEET_CSV_URL = `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/export?format=csv&gid=0`;
+const SHEET_CSV_URL = `https://script.google.com/macros/s/AKfycbzD6nVvHJT01_3xIWObZjzitFrguG5Z1eAPl5gaA6_B6mWbKMJB43zynJKfsHqIZBr4Sw/exec`;
 
 let recipes = [];
 let filteredRecipes = [];
