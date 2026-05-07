@@ -23,11 +23,7 @@
   let allRecipes = [];
 
   // ── DOM refs ──
-  const lockScreen   = document.getElementById('lock-screen');
   const app          = document.getElementById('app');
-  const pwInput      = document.getElementById('password-input');
-  const unlockBtn    = document.getElementById('unlock-btn');
-  const pwError      = document.getElementById('pw-error');
   const searchInput  = document.getElementById('search');
   const filterCat    = document.getElementById('filter-category');
   const grid         = document.getElementById('recipe-grid');
@@ -39,33 +35,11 @@
   const modalContent = document.getElementById('modal-content');
 
   // ─────────────────────────────────────────────
-  //  AUTH
+  //  INIT
   // ─────────────────────────────────────────────
 
-  // Check if already unlocked this session
-  if (sessionStorage.getItem('recipe_unlocked') === 'true') {
-    unlock();
-  }
-
-  unlockBtn.addEventListener('click', attemptUnlock);
-  pwInput.addEventListener('keydown', e => { if (e.key === 'Enter') attemptUnlock(); });
-
-  function attemptUnlock() {
-    if (pwInput.value === CONFIG.PASSWORD) {
-      sessionStorage.setItem('recipe_unlocked', 'true');
-      unlock();
-    } else {
-      pwError.classList.remove('hidden');
-      pwInput.value = '';
-      pwInput.focus();
-    }
-  }
-
-  function unlock() {
-    lockScreen.classList.add('hidden');
-    app.classList.remove('hidden');
-    loadRecipes();
-  }
+  // Load recipes on page load
+  loadRecipes();
 
   // ─────────────────────────────────────────────
   //  DATA — Google Sheets CSV
