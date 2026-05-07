@@ -21,13 +21,11 @@ let activeCategory = 'all';
 
 // ── Init ──────────────────────────────────────────
 loadRecipes();
-
 // NEW — direct export endpoint, preserves multiline cells properly
 function getCsvUrl() {
   const id  = CONFIG.SHEET_ID;
   const tab = encodeURIComponent(CONFIG.SHEET_TAB);
   return `https://docs.google.com/spreadsheets/d/${id}/export?format=csv&sheet=${tab}`;
-}
 }
 
 async function loadRecipes() {
