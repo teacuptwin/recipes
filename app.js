@@ -21,7 +21,8 @@ let activeCategory = 'all';
 
 // ── Init ──────────────────────────────────────────
 loadRecipes();
-// NEW — direct export endpoint, preserves multiline cells properly
+
+// ── TSV Fetch ─────────────────────────────────────
 function getCsvUrl() {
   const id  = CONFIG.SHEET_ID;
   const tab = encodeURIComponent(CONFIG.SHEET_TAB);
@@ -33,8 +34,8 @@ async function loadRecipes() {
   try {
     const res = await fetch(getCsvUrl());
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const csv = await res.text();
-    allRecipes = parseCsv(csv);
+    const tsv = await res.text();
+    allRecipes = parseCsv(tsv);
     buildFilters();
     renderGrid(allRecipes);
     showState('grid');
@@ -51,25 +52,23 @@ function showState(state) {
   emptyState.classList.add('hidden');
   recipeGrid.classList.add('hidden');
   filterBar.classList.add('hidden');
-  if (state === 'loading')      loadingState.classList.remove('hidden');
-  else if (state === 'error')   errorState.classList.remove('hidden');
-  else if (state === 'empty')   emptyState.classList.remove('hidden');
+  if (state === 'loading')    loadingState.classList.remove('hidden');
+  else if (state === 'error') errorState.classList.remove('hidden');
+  else if (state === 'empty') emptyState.classList.remove('hidden');
   else if (state === 'grid') {
     recipeGrid.classList.remove('hidden');
     filterBar.classList.remove('hidden');
   }
 }
 
-// ── CSV Parser (PapaParse) ────────────────────────
-// PapaParse handles multiline cell values (newlines inside quoted fields)
-// automatically, which fixes ingredients/steps that span multiple lines.
+// ── Parser (PapaParse) ────────────────────────────
 function parseCsv(text) {
   const result = Papa.parse(text, {
     header: true,
-    delimiter: "\t",
+    delimiter: '\t',
     skipEmptyLines: true,
     transformHeader: h => h.trim().toLowerCase(),
-    // ← no transform here — it collapses multiline values
+    // No transform — it would collapse multiline cell values
   });
 
   if (result.errors.length) {
@@ -94,16 +93,16 @@ function parseCsv(text) {
 function splitLines(str) {
   return str
     .split(/\n/)
-    .map(s => s.replace(/\s{2,}/g, ' ').trim())  // collapse multiple spaces
+    .map(s => s.replace(/\s{2,}/g, ' ').trim()) // collapse multiple spaces
     .filter(Boolean);
 }
 
 function parseSteps(str) {
   return str
     .split(/\n/)
-    .map(s => s.trim())
+    .map(s => s.replace(/\s{2,}/g, ' ').trim())
     .filter(Boolean)
-    .map(l => l.replace(/^\d+[\.\)]\s*/, ''));
+    .map(l => l.replace(/^\d+[\.\)]\s*/, '')); // strip leading numbers
 }
 
 // ── Filters ───────────────────────────────────────
@@ -207,7 +206,6 @@ function openModal(recipe) {
   const notesWrap = document.getElementById('modal-notes-wrap');
   const notesP    = document.getElementById('modal-notes');
 
-  // Hero image or emoji
   hero.querySelectorAll('img').forEach(el => el.remove());
   if (recipe.imageUrl) {
     const img = document.createElement('img');
@@ -227,8 +225,13 @@ function openModal(recipe) {
   cook.textContent     = recipe.cookTime || '—';
   servings.textContent = recipe.servings || '—';
 
-  ingList.innerHTML  = recipe.ingredients.map(i => `<li>${escHtml(i)}</li>`).join('');
-  stepList.innerHTML = recipe.steps.map(s => `<li>${escHtml(s)}</li>`).join('');
+  ingList.innerHTML  = recipe.ingredients.length
+    ? recipe.ingredients.map(i => `<li>${escHtml(i)}</li>`).join('')
+    : '<li>No ingredients listed.</li>';
+
+  stepList.innerHTML = recipe.steps.length
+    ? recipe.steps.map(s => `<li>${escHtml(s)}</li>`).join('')
+    : '<li>No method listed.</li>';
 
   if (recipe.notes) {
     notesP.textContent = recipe.notes;
@@ -254,8 +257,8 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal()
 // ── Util ──────────────────────────────────────────
 function escHtml(str) {
   return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/&/g,  '&amp;')
+    .replace(/</g,  '&lt;')
+    .replace(/>/g,  '&gt;')
+    .replace(/"/g,  '&quot;');
 }
