@@ -1,5 +1,7 @@
 /* ══════════════════════════════════════════════════
    Recipe Book — app.js
+   Requires PapaParse — add to your HTML before this script:
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
    ══════════════════════════════════════════════════ */
 
 // ── Elements ──────────────────────────────────────
@@ -10,7 +12,6 @@ const errorState    = document.getElementById('error-state');
 const errorMsg      = document.getElementById('error-message');
 const emptyState    = document.getElementById('empty-state');
 const recipeGrid    = document.getElementById('recipe-grid');
-
 const modalOverlay  = document.getElementById('modal-overlay');
 const modalClose    = document.getElementById('modal-close');
 
@@ -51,64 +52,43 @@ function showState(state) {
   emptyState.classList.add('hidden');
   recipeGrid.classList.add('hidden');
   filterBar.classList.add('hidden');
-
-  if (state === 'loading') loadingState.classList.remove('hidden');
-  else if (state === 'error') errorState.classList.remove('hidden');
-  else if (state === 'empty') emptyState.classList.remove('hidden');
+  if (state === 'loading')      loadingState.classList.remove('hidden');
+  else if (state === 'error')   errorState.classList.remove('hidden');
+  else if (state === 'empty')   emptyState.classList.remove('hidden');
   else if (state === 'grid') {
     recipeGrid.classList.remove('hidden');
     filterBar.classList.remove('hidden');
   }
 }
 
-// ── CSV Parser ────────────────────────────────────
+// ── CSV Parser (PapaParse) ────────────────────────
+// PapaParse handles multiline cell values (newlines inside quoted fields)
+// automatically, which fixes ingredients/steps that span multiple lines.
 function parseCsv(text) {
-  const lines = text.trim().split(/\r?\n/);
-  if (lines.length < 2) return [];
+  const result = Papa.parse(text, {
+    header: true,          // use first row as field names
+    skipEmptyLines: true,  // drop fully blank rows
+    transformHeader: h => h.trim().toLowerCase(),
+    transform: val => val.trim(),
+  });
 
-  const headers = parseCsvRow(lines[0]).map(h => h.trim().toLowerCase());
-  const recipes = [];
-
-  for (let i = 1; i < lines.length; i++) {
-    const cols = parseCsvRow(lines[i]);
-    if (cols.every(c => !c.trim())) continue;
-
-    const row = {};
-    headers.forEach((h, idx) => { row[h] = (cols[idx] || '').trim(); });
-
-    recipes.push({
-      title:       row['title']       || 'Untitled',
-      category:    row['category']    || '',
-      description: row['description'] || '',
-      prepTime:    row['prep time']   || row['prep_time']   || '',
-      cookTime:    row['cook time']   || row['cook_time']   || '',
-      servings:    row['servings']    || '',
-      ingredients: splitLines(row['ingredients'] || ''),
-      steps:       parseSteps(row['steps']       || ''),
-      notes:       row['notes']       || '',
-      imageUrl:    row['image url']   || row['image_url']   || '',
-      emoji:       row['emoji']       || '🍽️',
-    });
+  if (result.errors.length) {
+    console.warn('PapaParse warnings:', result.errors);
   }
-  return recipes;
-}
 
-function parseCsvRow(line) {
-  const result = [];
-  let cur = '', inQuotes = false;
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i];
-    if (ch === '"') {
-      if (inQuotes && line[i+1] === '"') { cur += '"'; i++; }
-      else inQuotes = !inQuotes;
-    } else if (ch === ',' && !inQuotes) {
-      result.push(cur); cur = '';
-    } else {
-      cur += ch;
-    }
-  }
-  result.push(cur);
-  return result;
+  return result.data.map(row => ({
+    title:       row['title']       || 'Untitled',
+    category:    row['category']    || '',
+    description: row['description'] || '',
+    prepTime:    row['prep time']   || row['prep_time']   || '',
+    cookTime:    row['cook time']   || row['cook_time']   || '',
+    servings:    row['servings']    || '',
+    ingredients: splitLines(row['ingredients'] || ''),
+    steps:       parseSteps(row['steps']       || ''),
+    notes:       row['notes']       || '',
+    imageUrl:    row['image url']   || row['image_url']   || '',
+    emoji:       row['emoji']       || '🍽️',
+  }));
 }
 
 function splitLines(str) {
@@ -119,22 +99,19 @@ function splitLines(str) {
 }
 
 function parseSteps(str) {
-  const lines = str.split(/\n/).map(s => s.trim()).filter(Boolean);
-  return lines.map(l => l.replace(/^\d+[\.\)]\s*/, ''));
+  return str
+    .split(/\n/)
+    .map(s => s.trim())
+    .filter(Boolean)
+    .map(l => l.replace(/^\d+[\.\)]\s*/, ''));
 }
 
 // ── Filters ───────────────────────────────────────
 function buildFilters() {
   const categories = [...new Set(allRecipes.map(r => r.category).filter(Boolean))].sort();
   filterBar.innerHTML = '';
-
-  const all = makeFilterPill('All', 'all');
-  filterBar.appendChild(all);
-
-  categories.forEach(cat => {
-    filterBar.appendChild(makeFilterPill(cat, cat));
-  });
-
+  filterBar.appendChild(makeFilterPill('All', 'all'));
+  categories.forEach(cat => filterBar.appendChild(makeFilterPill(cat, cat)));
   filterBar.addEventListener('click', e => {
     const pill = e.target.closest('.filter-pill');
     if (!pill) return;
@@ -159,11 +136,9 @@ searchInput.addEventListener('input', applyFilters);
 function applyFilters() {
   const query = searchInput.value.trim().toLowerCase();
   let results = allRecipes;
-
   if (activeCategory !== 'all') {
     results = results.filter(r => r.category === activeCategory);
   }
-
   if (query) {
     results = results.filter(r =>
       r.title.toLowerCase().includes(query) ||
@@ -172,10 +147,8 @@ function applyFilters() {
       r.ingredients.some(i => i.toLowerCase().includes(query))
     );
   }
-
   renderGrid(results);
-  if (results.length === 0) showState('empty');
-  else showState('grid');
+  showState(results.length === 0 ? 'empty' : 'grid');
 }
 
 // ── Grid Render ───────────────────────────────────
@@ -221,18 +194,18 @@ function buildCard(recipe) {
 
 // ── Modal ─────────────────────────────────────────
 function openModal(recipe) {
-  const hero    = document.getElementById('modal-hero');
-  const emoji   = document.getElementById('modal-emoji');
-  const catTag  = document.getElementById('modal-category');
-  const title   = document.getElementById('modal-title');
-  const desc    = document.getElementById('modal-description');
-  const prep    = document.getElementById('modal-prep');
-  const cook    = document.getElementById('modal-cook');
-  const servings= document.getElementById('modal-servings');
-  const ingList = document.getElementById('modal-ingredients');
-  const stepList= document.getElementById('modal-steps');
-  const notesWrap=document.getElementById('modal-notes-wrap');
-  const notesP  = document.getElementById('modal-notes');
+  const hero      = document.getElementById('modal-hero');
+  const emoji     = document.getElementById('modal-emoji');
+  const catTag    = document.getElementById('modal-category');
+  const title     = document.getElementById('modal-title');
+  const desc      = document.getElementById('modal-description');
+  const prep      = document.getElementById('modal-prep');
+  const cook      = document.getElementById('modal-cook');
+  const servings  = document.getElementById('modal-servings');
+  const ingList   = document.getElementById('modal-ingredients');
+  const stepList  = document.getElementById('modal-steps');
+  const notesWrap = document.getElementById('modal-notes-wrap');
+  const notesP    = document.getElementById('modal-notes');
 
   // Hero image or emoji
   hero.querySelectorAll('img').forEach(el => el.remove());
@@ -254,7 +227,7 @@ function openModal(recipe) {
   cook.textContent     = recipe.cookTime || '—';
   servings.textContent = recipe.servings || '—';
 
-  ingList.innerHTML = recipe.ingredients.map(i => `<li>${escHtml(i)}</li>`).join('');
+  ingList.innerHTML  = recipe.ingredients.map(i => `<li>${escHtml(i)}</li>`).join('');
   stepList.innerHTML = recipe.steps.map(s => `<li>${escHtml(s)}</li>`).join('');
 
   if (recipe.notes) {
@@ -275,18 +248,14 @@ function closeModal() {
 }
 
 modalClose.addEventListener('click', closeModal);
-modalOverlay.addEventListener('click', e => {
-  if (e.target === modalOverlay) closeModal();
-});
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeModal();
-});
+modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
 // ── Util ──────────────────────────────────────────
 function escHtml(str) {
   return String(str)
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;');
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
