@@ -93,8 +93,8 @@ function parseCsv(text) {
 
 function splitLines(str) {
   return str
-    .split(/\n|;/)
-    .map(s => s.trim())
+    .split(/\n/)
+    .map(s => s.replace(/\s{2,}/g, ' ').trim())  // collapse multiple spaces
     .filter(Boolean);
 }
 
