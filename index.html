@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Recipe Book</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- PASSWORD SCREEN -->
+  <div id="lock-screen">
+    <div class="lock-card">
+      <div class="lock-icon">🔒</div>
+      <h1>Recipe Book</h1>
+      <p>Enter the password to browse recipes</p>
+      <input type="password" id="password-input" placeholder="Password" autocomplete="current-password" />
+      <button id="unlock-btn">Enter</button>
+      <p id="pw-error" class="pw-error hidden">Incorrect password. Try again.</p>
+    </div>
+  </div>
+
+  <!-- MAIN APP -->
+  <div id="app" class="hidden">
+
+    <header>
+      <div class="header-inner">
+        <div class="logo">
+          <span class="logo-icon">🍴</span>
+          <span class="logo-text">Recipe Book</span>
+        </div>
+        <div class="header-controls">
+          <div class="search-wrap">
+            <input type="text" id="search" placeholder="Search recipes…" />
+            <span class="search-icon">⌕</span>
+          </div>
+          <select id="filter-category">
+            <option value="">All categories</option>
+          </select>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <div id="loading" class="state-msg">Loading recipes…</div>
+      <div id="error-msg" class="state-msg hidden">
+        Couldn't load recipes. Check your Sheet ID in <code>js/config.js</code>.
+      </div>
+      <div id="empty-msg" class="state-msg hidden">No recipes found.</div>
+
+      <div id="recipe-grid" class="recipe-grid hidden"></div>
+    </main>
+
+    <!-- RECIPE MODAL -->
+    <div id="modal-overlay" class="modal-overlay hidden">
+      <div id="modal" class="modal">
+        <button class="modal-close" id="modal-close">✕</button>
+        <div id="modal-content"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
