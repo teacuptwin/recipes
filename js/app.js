@@ -126,16 +126,32 @@ function renderRecipes() {
   filteredRecipes.forEach((recipe, index) => {
     const card = document.createElement('div');
     card.className = 'recipe-card';
+    
+    let heroHTML;
+    if (recipe.imageUrl) {
+      heroHTML = `<img src="${recipe.imageUrl}" alt="${recipe.title}" />`;
+    } else {
+      heroHTML = `<div class="card-hero-emoji">${recipe.emoji}</div>`;
+    }
+    
     card.innerHTML = `
-      <div class="recipe-card-image">
-        ${recipe.imageUrl ? `<img src="${recipe.imageUrl}" alt="${recipe.title}" />` : `<div class="recipe-emoji">${recipe.emoji}</div>`}
+      <div class="card-hero">
+        ${heroHTML}
       </div>
-      <div class="recipe-card-content">
-        <span class="recipe-category">${recipe.category}</span>
-        <h3 class="recipe-title">${recipe.title}</h3>
-        <p class="recipe-description">${recipe.description}</p>
+      <div class="card-body">
+        <div class="card-category">${recipe.category}</div>
+        <h3 class="card-title">${recipe.title}</h3>
+        <p class="card-desc">${recipe.description}</p>
+        <div class="card-meta">
+          <span>⏱ ${recipe.prepTime}</span>
+          <span class="meta-dot"></span>
+          <span>🔥 ${recipe.cookTime}</span>
+          <span class="meta-dot"></span>
+          <span>🍽 ${recipe.servings}</span>
+        </div>
       </div>
     `;
+    
     card.addEventListener('click', () => showRecipeModal(index));
     recipeGrid.appendChild(card);
   });
@@ -193,7 +209,6 @@ searchInput.addEventListener('input', (e) => {
 function showRecipeModal(index) {
   const recipe = filteredRecipes[index];
   
-  document.getElementById('modal-emoji').textContent = recipe.emoji;
   document.getElementById('modal-title').textContent = recipe.title;
   document.getElementById('modal-category').textContent = recipe.category;
   document.getElementById('modal-description').textContent = recipe.description;
@@ -218,13 +233,20 @@ function showRecipeModal(index) {
     notesWrap.classList.add('hidden');
   }
   
-  // Image background
+  // Hero section
+  const modalHero = document.getElementById('modal-hero');
+  const modalEmoji = document.getElementById('modal-emoji');
+  
   if (recipe.imageUrl) {
-    document.getElementById('modal-hero').style.backgroundImage = `url('${recipe.imageUrl}')`;
-    document.getElementById('modal-emoji').style.display = 'none';
+    modalHero.style.backgroundImage = `url('${recipe.imageUrl}')`;
+    modalEmoji.style.display = 'none';
+    modalHero.innerHTML = `<img src="${recipe.imageUrl}" alt="${recipe.title}" />`;
   } else {
-    document.getElementById('modal-hero').style.backgroundImage = 'none';
-    document.getElementById('modal-emoji').style.display = 'block';
+    modalHero.style.backgroundImage = 'none';
+    modalHero.innerHTML = '';
+    modalEmoji.textContent = recipe.emoji;
+    modalEmoji.style.display = 'block';
+    modalHero.appendChild(modalEmoji);
   }
   
   modalOverlay.classList.remove('hidden');
